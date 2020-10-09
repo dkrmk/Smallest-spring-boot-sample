@@ -15,15 +15,22 @@ pipeline {
                 stash includes: 'SmallestSpringApp/target/*', name: 'app'
             }
         }
-        stage('Deploy') {
+        stage('Build image') {
             agent any
             steps {
                 unstash 'app'
                 // sh 'cd SmallestSpringApp/target'
                 sh 'ls'
-                sh 'docker build -t smallest-spring-app:${BUILD_NUMBER} .'
-                // sh 'docker tag -t smallest-spring-app:${BUILD_NUMBER} smallest-spring-app:latest'
-                sh 'docker images'
+                sh 'docker build -t mk0dockerhub/smallest-spring-app:${BUILD_NUMBER} .'
+                sh 'docker tag mk0dockerhub/smallest-spring-app:${BUILD_NUMBER} mk0dockerhub/smallest-spring-app:latest'
+            }
+        }
+        stage('CD') {
+            agent any
+            steps {
+                withDockerRegistry([ credentialsId: "docker-hub", url: "https://index.docker.io/v1/" ]) {
+                    sh 'docker push mk0dockerhub/smallest-spring-app:latest'
+                }
             }
         }
     }
